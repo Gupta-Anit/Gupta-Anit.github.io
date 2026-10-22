@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Anit Gupta · Data Engineer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Anit Gupta, Senior Data Engineer at Paramount+. Attribution, audience and identity data, streaming pipelines, and GenAI data platforms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column that opens on a live pipeline diagram; sections read like stages of a DAG, each with a mono "stage" label in the margin. */
+:root {
+  --bg: #F2F4F7;
+  --surface: #FFFFFF;
+  --ink: #121826;
+  --muted: #566074;
+  --line: #D6DBE4;
+  --accent: #2443D6;
+  --accent-soft: #E3E8FC;
+  --signal: #C77700;
+  --drop: #C2413A;
+  --font-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.625rem;
+  --step-3: clamp(2.25rem, 5.5vw, 3.75rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D111B; --surface: #151B29; --ink: #E8ECF4; --muted: #9AA4B8; --line: #263045;
+    --accent: #8FA2FF; --accent-soft: #1C2647; --signal: #F2A93B; --drop: #F07068;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D111B; --surface: #151B29; --ink: #E8ECF4; --muted: #9AA4B8; --line: #263045;
+  --accent: #8FA2FF; --accent-soft: #1C2647; --signal: #F2A93B; --drop: #F07068;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- Hero ---------- */
+.hero { padding-block: 56px 32px; display: grid; gap: 28px; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.eyebrow b { color: var(--accent); font-weight: 500; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-3);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin: 0;
+  text-wrap: balance;
+}
+.thesis {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ink);
+}
+.thesis em { font-style: normal; color: var(--accent); font-weight: 600; }
+.contact { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 var(--step--1)/1 var(--font-mono);
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.btn:hover { border-color: var(--accent); }
+.email { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); user-select: all; }
+
+/* Live pipeline */
+.pipe {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.pipe canvas { display: block; width: 100%; height: 240px; }
+.pipe-cap {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px;
+  border-top: 1px solid var(--line);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.pipe-cap span i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+/* Metrics */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.metric { padding: 18px 16px 18px 0; display: grid; gap: 2px; }
+.metric + .metric { padding-left: 16px; border-left: 1px solid var(--line); }
+.metric .n {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--step-2);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+.metric .l { font-size: var(--step--1); color: var(--muted); line-height: 1.4; }
+
+/* ---------- Sections ---------- */
+section { padding-block: 48px; border-top: 1px solid var(--line); }
+.sec { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; }
+.stage {
+  font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted);
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start;
+}
+.stage b { display: block; color: var(--ink); font-weight: 500; }
+h2 {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--step-2);
+  line-height: 1.2; letter-spacing: -0.015em; margin: 0 0 18px; text-wrap: balance;
+}
+h3 { font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); margin: 0; line-height: 1.3; }
+p { margin: 0; max-width: 65ch; }
+.lede { color: var(--muted); margin-bottom: 24px; }
+
+/* Streaming services: viewer journey + spotlights */
+.journey {
+  list-style: none; margin: 0 0 28px; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden;
+}
+.journey li { position: relative; padding: 16px 18px 18px; display: grid; gap: 4px; align-content: start; }
+.journey li + li { border-left: 1px solid var(--line); }
+.journey li + li::before {
+  content: ""; position: absolute; left: -6px; top: 22px; width: 10px; height: 10px;
+  background: var(--surface); border-top: 1px solid var(--line); border-right: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+.j-step { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.journey strong { font-family: var(--font-display); font-size: var(--step-0); }
+.j-data { color: var(--muted); font-size: 0.875rem; line-height: 1.45; }
+.spot { display: grid; gap: 0; }
+.spot-item { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; padding-block: 16px; border-top: 1px solid var(--line); }
+.spot-k { font-family: var(--font-display); font-weight: 700; font-size: var(--step-0); line-height: 1.35; }
+.spot-item p { color: var(--muted); font-size: 0.9375rem; }
+
+/* What I build */
+.build { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.build div { padding-block: 16px; border-top: 1px solid var(--line); display: grid; gap: 4px; }
+.build h3 { font-size: var(--step-0); }
+.build p { color: var(--muted); font-size: 0.9375rem; }
+
+/* Featured project */
+.feature {
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+  padding: 24px; display: grid; gap: 20px;
+}
+.feature-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-family: var(--font-mono); font-size: 0.75rem; padding: 3px 8px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.mini-h { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+ul.ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+ul.ticks li { padding-left: 18px; position: relative; font-size: 0.9375rem; }
+ul.ticks li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 2px; background: var(--accent); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-weight: 500; font-size: 0.75rem; color: var(--muted); }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+td.ok { color: var(--accent); font-weight: 600; }
+
+/* Experience */
+.timeline { display: grid; gap: 0; }
+.job { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; padding-block: 20px; border-top: 1px solid var(--line); }
+.job:first-child { border-top: 0; padding-top: 0; }
+.when { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); font-variant-numeric: tabular-nums; }
+.job .co { color: var(--muted); font-size: 0.9375rem; margin-bottom: 8px; }
+
+/* Projects */
+.projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.proj { display: grid; gap: 6px; align-content: start; padding-top: 14px; border-top: 2px solid var(--ink); }
+.proj p { color: var(--muted); font-size: 0.9375rem; }
+.proj a { font-family: var(--font-mono); font-size: 0.8125rem; }
+
+/* Stack + education */
+.stack { display: grid; gap: 14px; }
+.stack-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; }
+.stack-row span { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); }
+.edu { display: grid; gap: 10px; margin-top: 28px; }
+.edu div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; border-top: 1px solid var(--line); padding-top: 10px; }
+.edu small { color: var(--muted); font-size: var(--step--1); }
+
+footer { padding-block: 48px 64px; border-top: 1px solid var(--line); }
+footer .contact { margin-top: 16px; }
+.toast { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); min-height: 1em; }
+
+@media (max-width: 820px) {
+  .sec { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .stage { position: static; }
+  .stage b { display: inline; margin-left: 8px; }
+  .projects { grid-template-columns: minmax(0, 1fr); }
+  .two { grid-template-columns: minmax(0, 1fr); }
+  .journey { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .journey li:nth-child(3) { border-left: 0; }
+  .journey li:nth-child(3)::before { display: none; }
+  .journey li:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .spot-item { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (max-width: 480px) {
+  .journey { grid-template-columns: minmax(0, 1fr); }
+  .journey li + li { border-left: 0; border-top: 1px solid var(--line); }
+  .journey li + li::before { display: none; }
+}
+@media (max-width: 640px) {
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric:nth-child(3) { padding-left: 0; border-left: 0; }
+  .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .build { grid-template-columns: minmax(0, 1fr); }
+  .job, .stack-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .pipe canvas { height: 300px; }
+  .feature { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow"><b>●</b> Senior Data Engineer · Paramount+ · Miami / Fort Lauderdale · open to remote</div>
+    <h1>Anit Gupta</h1>
+    <p class="thesis">I build the data a streaming service runs on: <em>clickstream, marketing attribution, MMM and audience data</em> that stays correct at 20TB a day, from live sports marketing to the subscriber lifecycle.</p>
+    <div class="contact">
+      <a class="btn primary" href="https://www.linkedin.com/in/anit-gupta/" target="_blank" rel="noopener">LinkedIn ↗</a>
+      <a class="btn" href="https://github.com/Gupta-Anit" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="btn" type="button" id="copy-email">Copy email</button>
+      <span class="email">anitg.4@gmail.com</span>
+      <span class="toast" id="toast" aria-live="polite"></span>
+    </div>
+
+    <figure class="pipe" style="margin:0">
+      <canvas id="pipe" aria-label="Animated diagram of a streaming pipeline: events flow from a source through a producer that filters bot edits, into Kafka, through Flink windows, into Iceberg snapshots, and are queried by Trino."></canvas>
+      <figcaption class="pipe-cap">
+        <span><i style="background:var(--accent)"></i>event</span>
+        <span><i style="background:var(--drop)"></i>bot edit, filtered at the producer</span>
+        <span><i style="background:var(--signal)"></i>1-min window committed on checkpoint</span>
+        <span>streamscope architecture, simulated</span>
+      </figcaption>
+    </figure>
+
+    <div class="metrics">
+      <div class="metric"><span class="n">45+</span><span class="l">production pipelines owned</span></div>
+      <div class="metric"><span class="n">20TB+</span><span class="l">processed per day</span></div>
+      <div class="metric"><span class="n">80M+</span><span class="l">subscribers behind the data</span></div>
+      <div class="metric"><span class="n">−85%</span><span class="l">time to investigate data issues</span></div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 01<b>streaming services</b></div>
+      <div>
+        <h2>The data a streaming service runs on, from the ad a fan sees to the match they watch</h2>
+        <p class="lede">At Paramount+ I work on the data behind a subscription streaming service: how viewers find us, what they watch, and whether they stay. Live sports, including the NFL, UFC and UEFA Champions League, is where the traffic spikes and the marketing stakes are highest.</p>
+
+        <ol class="journey" aria-label="Viewer journey on a streaming service">
+          <li><span class="j-step">Reach</span><strong>Campaigns and media</strong><span class="j-data">Spend, impressions and partner touchpoints by channel</span></li>
+          <li><span class="j-step">Convert</span><strong>Sign-up</strong><span class="j-data">Conversions tied back to the campaigns and events that drove them</span></li>
+          <li><span class="j-step">Watch</span><strong>Viewing and live events</strong><span class="j-data">Clickstream and playback events, live-event audiences</span></li>
+          <li><span class="j-step">Retain</span><strong>Subscription lifecycle</strong><span class="j-data">Retention, lifetime value and account-sharing signals</span></li>
+        </ol>
+
+        <div class="spot">
+          <div class="spot-item">
+            <div class="spot-k">Sports event marketing attribution</div>
+            <p>Connects marketing for live sports moments, like a UFC card, an NFL game or a Champions League match, to the sign-ups and tune-in they produced. Built on live-event dimension models and automated live sports reporting, so marketing sees which event campaigns paid off.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Media mix modeling (MMM)</div>
+            <p>Builds the input data MMM depends on: consistent spend, impressions and conversions by channel over time, reconciled across 20+ marketing platforms. Clean inputs are what make the model's budget recommendations trustworthy.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Clickstream data</div>
+            <p>Turns raw app and web event streams into analytics-ready models at 20TB+ a day. The same clickstream feeds attribution, product analytics, audience segments and subscriber retention work.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 02<b>what I build</b></div>
+      <div>
+        <h2>Trusted data for the decisions that cost the most money</h2>
+        <p class="lede">Nine-plus years across telecom, scientific ML and streaming media. At Paramount+ I lead data engineering for subscriber, content and marketing data.</p>
+        <div class="build">
+          <div><h3>Marketing measurement</h3><p>Attribution and media mix modeling inputs that guide where marketing spend goes.</p></div>
+          <div><h3>Audience and identity data</h3><p>Privacy-safe delivery to marketing and partner platforms, with identity resolution and consent enforcement for 80M+ subscribers.</p></div>
+          <div><h3>Data quality and observability</h3><p>Automated anomaly detection, root-cause ranking and alerting that cut investigation time by 85%.</p></div>
+          <div><h3>Warehouse cost governance</h3><p>Query-level monitoring and spend attribution by team, so expensive queries get caught early.</p></div>
+          <div><h3>Subscriber analytics</h3><p>Data for retention, lifetime value forecasting and account-sharing analysis.</p></div>
+          <div><h3>GenAI data foundations</h3><p>A semantic layer, guardrails and evals for analytics agents, plus LLM pipelines that replace manual classification work.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 03<b>agentic &amp; GenAI</b></div>
+      <div>
+        <h2>AI agents that answer from governed data, not guesses</h2>
+        <p class="lede">An agent is only as good as the definitions, context and checks behind it, so most of my GenAI work is data work: giving agents a trusted view of the warehouse and testing what they say before anyone relies on it.</p>
+        <div class="tags" style="margin-bottom:20px">
+          <span class="tag">Semantic layer</span><span class="tag">Context layer</span><span class="tag">Open Knowledge Format</span><span class="tag">Google ADK</span><span class="tag">A2A</span><span class="tag">LangGraph</span><span class="tag">LangChain</span><span class="tag">Skill files</span><span class="tag">Gemini 2.5</span><span class="tag">LLM evals</span>
+        </div>
+        <div class="spot">
+          <div class="spot-item">
+            <div class="spot-k">Semantic layer for agents</div>
+            <p>Governed metric and dimension definitions that analytics agents query instead of raw tables, so "active subscriber" or "attributed sign-up" means the same thing to an agent as it does to finance.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Context layer</div>
+            <p>The business context agents need beyond metric definitions: what each table and column means, who owns it, how fresh it is, and the caveats an experienced analyst would know. Agents pull this in before they write a query.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Open Knowledge Format (Google OKF)</div>
+            <p>Data knowledge written as linked Markdown files with YAML frontmatter, following Google Cloud's open spec, so the same context can be versioned in Git and served to agents through a knowledge catalog instead of living in scattered wikis and code comments.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Guardrails and evals</div>
+            <p>Checks that stop agents from inventing numbers, plus evaluation sets that test answers against known results before a change ships.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Data Engineering Agents (Google ADK)</div>
+            <p>A proof-of-concept framework of cooperating agents, built on Google's Agent Development Kit and A2A, that help build pipelines and run data quality checks, with cost controls for agents that query large BigQuery tables.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">Skill files</div>
+            <p>Packaged, reusable instructions that give agents team-specific know-how, such as table context, SQL conventions and runbooks, so they follow how the team actually works.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">LangGraph and LangChain</div>
+            <p>Multi-step agent workflows with explicit state, tool calls and retrieval over warehouse metadata.</p>
+          </div>
+          <div class="spot-item">
+            <div class="spot-k">LLM content-trait pipeline</div>
+            <p>An in-house Gemini 2.5 pipeline that generates content traits for about 10,000 titles, replacing a third-party vendor. Presented at an internal AI/ML conference.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 04<b>featured project</b></div>
+      <div>
+        <h2>streamscope: exactly-once streaming on a lakehouse</h2>
+        <div class="feature">
+          <div class="feature-head">
+            <div class="tags">
+              <span class="tag">Kafka (KRaft)</span><span class="tag">Flink SQL 1.18</span><span class="tag">Iceberg 1.5</span><span class="tag">Trino</span><span class="tag">MinIO</span><span class="tag">Docker Compose</span>
+            </div>
+            <a href="https://github.com/Gupta-Anit/streamscope" target="_blank" rel="noopener">View on GitHub ↗</a>
+          </div>
+          <p>Ingests live Wikipedia edit events, filters bot edits, computes per-wiki one-minute tumbling windows on event time with a 30-second watermark, and commits the results to Iceberg for SQL and time-travel queries in Trino. The whole stack starts with one <code>docker compose up</code>.</p>
+          <div class="two">
+            <div>
+              <div class="mini-h">How exactly-once holds</div>
+              <ul class="ticks">
+                <li>Kafka offsets live in Flink checkpoint state, so a restart rewinds to the last checkpoint.</li>
+                <li>Flink snapshots state and offsets to object storage every 30 seconds.</li>
+                <li>Iceberg commits a snapshot only when a checkpoint completes, so writes from a failed task are discarded.</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-h">Chaos test: TaskManager killed mid-stream</div>
+              <div class="scroll">
+                <table>
+                  <thead><tr><th></th><th>Before</th><th>After recovery</th></tr></thead>
+                  <tbody>
+                    <tr><td>Rows</td><td class="num">1,401</td><td class="num">1,655</td></tr>
+                    <tr><td>Iceberg snapshots</td><td class="num">29</td><td class="num">33</td></tr>
+                    <tr><td>Latest window</td><td class="num">16:03</td><td class="num">16:10</td></tr>
+                    <tr><td>Duplicate windows</td><td class="num">–</td><td class="num ok">0</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mini-h">Trade-offs I chose on purpose</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Decision</th><th>Why</th><th>Cost</th></tr></thead>
+                <tbody>
+                  <tr><td>JSON over Avro</td><td>No schema registry to run</td><td>About 3× storage, no enforced schema evolution</td></tr>
+                  <tr><td>Flink SQL over DataStream API</td><td>Declarative and quick to write</td><td>Less control over custom state</td></tr>
+                  <tr><td>30-second watermark</td><td>Fits this stream's lateness</td><td>Higher values drop less but add latency</td></tr>
+                  <tr><td>Hourly partitions</td><td>Matches time-bounded queries</td><td>Finer partitions cause small-file sprawl</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 05<b>experience</b></div>
+      <div class="timeline">
+        <div class="job">
+          <div class="when">2023 – now</div>
+          <div>
+            <h3>Senior Data Engineer</h3>
+            <div class="co">Paramount (Paramount+) · Miami, FL</div>
+            <ul class="ticks">
+              <li>Lead data engineering for subscriber, content and marketing data: 45+ production pipelines, 20TB+ a day.</li>
+              <li>Batch and near-real-time pipelines on GCP, BigQuery and Airflow, from raw clickstream to analytics-ready models.</li>
+              <li>Data foundation for attribution and MMM; privacy-safe audience delivery with identity resolution and consent enforcement.</li>
+              <li>Anomaly detection and alerting that cut investigation time by 85%; warehouse cost governance by team.</li>
+              <li>GenAI data foundations: semantic layer, guardrails and evals for analytics agents; LLM classification pipelines.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="job">
+          <div class="when">2021 – 2023</div>
+          <div>
+            <h3>Data Engineer</h3>
+            <div class="co">Paramount · Miami, FL</div>
+            <ul class="ticks">
+              <li>Marketing data pipelines connecting 20+ platforms (CRM, email, app stores) for segmentation and campaign activation.</li>
+              <li>Partner revenue reporting and reconciliation, plus automated reporting for live sports events.</li>
+              <li>Consolidated sports and news reporting pipelines into shared data models.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="job">
+          <div class="when">2020 – 2021</div>
+          <div>
+            <h3>Data Scientist</h3>
+            <div class="co">Predictive Science Inc. · San Francisco, CA</div>
+            <ul class="ticks">
+              <li>Deep learning for solar wind prediction reached 94% structural similarity, beating the physics-simulation baseline.</li>
+              <li>Served the model through a real-time inference API on AWS SageMaker.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="job">
+          <div class="when">2016 – 2019</div>
+          <div>
+            <h3>Data Analyst</h3>
+            <div class="co">Amdocs · Pune, India</div>
+            <ul class="ticks">
+              <li>Spark/Hadoop pipeline for 100M telecom customers; NLP in Python improved sentiment ratings by 30%.</li>
+              <li>Recommendation models for targeted up-sell and cross-sell reduced churn by 12%.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 06<b>more work</b></div>
+      <div class="projects">
+        <div class="proj">
+          <h3>Solar wind prediction</h3>
+          <p>ConvLSTM models predicting solar wind MHD parameters at 1 AU from heliospheric simulation data.</p>
+          <a href="https://github.com/Gupta-Anit/SolarWind_Prediction" target="_blank" rel="noopener">SolarWind_Prediction ↗</a>
+        </div>
+        <div class="proj">
+          <h3>Retail forecasting, HackGT 2019</h3>
+          <p>Time-series sales forecasting on real-time NCR store data, 89% accuracy.</p>
+          <a href="https://github.com/Gupta-Anit/Predictive-Analytical-tools-for-Store-Managers--HackGT-2019" target="_blank" rel="noopener">HackGT 2019 ↗</a>
+        </div>
+        <div class="proj">
+          <h3>LSTM text summarizer</h3>
+          <p>Sequence-to-sequence LSTM with attention for abstractive summarization.</p>
+          <a href="https://github.com/Gupta-Anit/LSTM-TEXT-SUMMARIZER" target="_blank" rel="noopener">LSTM-TEXT-SUMMARIZER ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <div class="stage">stage 07<b>stack &amp; education</b></div>
+      <div>
+        <div class="stack">
+          <div class="stack-row"><span>streaming</span><div>Kafka, Flink, Spark, Pub/Sub</div></div>
+          <div class="stack-row"><span>storage &amp; query</span><div>BigQuery, Iceberg, Trino, dbt</div></div>
+          <div class="stack-row"><span>orchestration</span><div>Airflow</div></div>
+          <div class="stack-row"><span>cloud &amp; infra</span><div>GCP, AWS (certified), Terraform, Docker</div></div>
+          <div class="stack-row"><span>languages</span><div>Python, SQL</div></div>
+          <div class="stack-row"><span>GenAI</span><div>Semantic and context layers, Open Knowledge Format, Google ADK, A2A, LangGraph, LangChain, skill files, Gemini, LLM evals</div></div>
+        </div>
+        <div class="edu">
+          <div><strong>M.S. Data Science and Analytics</strong><small>Georgia State University · 4.0 GPA</small></div>
+          <div><strong>MBA, Data-Driven Decision Making</strong><small>Westcliff University · in progress</small></div>
+          <div><strong>B.Tech</strong><small>Punjab Technical University</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <h2>Hiring for streaming, attribution or GenAI data work?</h2>
+    <p class="lede" style="margin:0">I'm glad to talk about senior and staff data engineering roles, remote or in South Florida.</p>
+    <div class="contact">
+      <a class="btn primary" href="https://www.linkedin.com/in/anit-gupta/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a>
+      <button class="btn" type="button" id="copy-email-2">Copy email</button>
+      <span class="email">anitg.4@gmail.com</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Copy email
+  var EMAIL = "anitg.4@gmail.com";
+  var toast = document.getElementById("toast");
+  function say(t) { if (toast) { toast.textContent = t; setTimeout(function () { toast.textContent = ""; }, 2200); } }
+  function copy(btn) {
+    try {
+      navigator.clipboard.writeText(EMAIL).then(function () { btn.textContent = "Copied"; say("Email copied"); setTimeout(function () { btn.textContent = "Copy email"; }, 2000); },
+        function () { selectEmail(btn); });
+    } catch (e) { selectEmail(btn); }
+  }
+  function selectEmail(btn) {
+    var span = btn.parentNode.querySelector(".email");
+    if (!span) return;
+    var r = document.createRange(); r.selectNodeContents(span);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    btn.textContent = "Press Ctrl/Cmd+C";
+  }
+  ["copy-email", "copy-email-2"].forEach(function (id) {
+    var b = document.getElementById(id); if (b) b.addEventListener("click", function () { copy(b); });
+  });
+
+  // Pipeline animation
+  var cv = document.getElementById("pipe");
+  if (!cv) return;
+  var ctx = cv.getContext("2d");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var STAGES = [
+    { name: "Wikimedia", sub: "SSE source" },
+    { name: "Producer", sub: "bot filter" },
+    { name: "Kafka", sub: "wmf.edits.raw" },
+    { name: "Flink SQL", sub: "1-min windows" },
+    { name: "Iceberg", sub: "snapshots" },
+    { name: "Trino", sub: "SQL · time travel" }
+  ];
+  var W = 0, H = 0, vertical = false, pts = [];
+  var colors = {};
+  function readColors() {
+    var cs = getComputedStyle(document.documentElement);
+    ["--ink", "--muted", "--line", "--accent", "--signal", "--drop", "--surface", "--accent-soft"].forEach(function (k) { colors[k] = cs.getPropertyValue(k).trim(); });
+  }
+  function resize() {
+    var r = cv.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    vertical = W < 560;
+    pts = STAGES.map(function (_, i) {
+      var t = i / (STAGES.length - 1);
+      if (vertical) {
+        var col = i % 2 === 0 ? 0.3 : 0.7;
+        return { x: W * col, y: 30 + t * (H - 60) };
+      }
+      return { x: 84 + t * (W - 168), y: H * 0.46 };
+    });
+    readColors();
+  }
+  // path position for progress p in [0, n-1]
+  function at(p) {
+    var i = Math.min(Math.floor(p), pts.length - 2), f = p - i;
+    return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * f, y: pts[i].y + (pts[i + 1].y - pts[i].y) * f };
+  }
+  var events = [], windows = [], buffer = 0, last = 0, spawnT = 0, winT = 0, snapshotPulse = 0;
+  function spawn() {
+    events.push({ p: 0, bot: Math.random() < 0.18, jitter: (Math.random() - 0.5) * 14, v: 0.55 + Math.random() * 0.35, alpha: 1 });
+  }
+  function step(dt) {
+    spawnT += dt; winT += dt;
+    while (spawnT > 0.11) { spawnT -= 0.11; spawn(); }
+    for (var i = events.length - 1; i >= 0; i--) {
+      var e = events[i];
+      e.p += e.v * dt;
+      if (e.bot && e.p > 1) { e.alpha -= dt * 3; e.jitter += dt * 40; if (e.alpha <= 0) { events.splice(i, 1); } continue; }
+      if (e.p >= 3) { buffer++; events.splice(i, 1); }
+    }
+    if (winT > 2.4 && buffer > 0) {
+      winT = 0;
+      windows.push({ p: 3, size: Math.min(4 + buffer * 0.35, 13) });
+      buffer = 0;
+    }
+    for (var j = windows.length - 1; j >= 0; j--) {
+      var w = windows[j];
+      w.p += 0.6 * dt;
+      if (w.p >= 4) { windows.splice(j, 1); snapshotPulse = 1; }
+    }
+    snapshotPulse = Math.max(0, snapshotPulse - dt * 1.5);
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // track
+    ctx.lineWidth = 2; ctx.strokeStyle = colors["--line"]; ctx.beginPath();
+    pts.forEach(function (pt, i) { if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); });
+    ctx.stroke();
+    // events
+    events.forEach(function (e) {
+      var q = at(e.p);
+      var ox = vertical ? e.jitter : 0, oy = vertical ? 0 : e.jitter;
+      ctx.globalAlpha = Math.max(0, e.alpha);
+      ctx.fillStyle = e.bot ? colors["--drop"] : colors["--accent"];
+      ctx.beginPath(); ctx.arc(q.x + ox, q.y + oy, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    // windows
+    windows.forEach(function (w) {
+      var q = at(w.p);
+      ctx.fillStyle = colors["--signal"];
+      ctx.fillRect(q.x - w.size / 2, q.y - w.size / 2, w.size, w.size);
+    });
+    // stages
+    ctx.textAlign = "center";
+    pts.forEach(function (pt, i) {
+      var r = 9;
+      var isIceberg = i === 4;
+      ctx.fillStyle = colors["--surface"];
+      ctx.strokeStyle = isIceberg && snapshotPulse > 0 ? colors["--signal"] : colors["--ink"];
+      ctx.lineWidth = isIceberg && snapshotPulse > 0 ? 2 + snapshotPulse * 2 : 2;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      var below = vertical ? false : (i % 2 === 0);
+      var ty, tx = pt.x;
+      if (vertical) {
+        ctx.textAlign = (i % 2 === 0) ? "right" : "left";
+        tx = pt.x + ((i % 2 === 0) ? -18 : 18);
+        ty = pt.y - 2;
+      } else {
+        ctx.textAlign = "center";
+        ty = below ? pt.y + 34 : pt.y - 40;
+      }
+      ctx.fillStyle = colors["--ink"];
+      ctx.font = '700 13px "Schibsted Grotesk", Arial, sans-serif';
+      ctx.fillText(STAGES[i].name, tx, ty);
+      ctx.fillStyle = colors["--muted"];
+      ctx.font = '400 11px "JetBrains Mono", Menlo, monospace';
+      ctx.fillText(STAGES[i].sub, tx, ty + 15);
+    });
+  }
+  function frame(t) {
+    var dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
+    step(dt); draw();
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  function prewarm() { for (var k = 0; k < 220; k++) step(1 / 30); }
+  resize(); prewarm(); draw();
+  if (!reduce) requestAnimationFrame(function (t) { last = t; requestAnimationFrame(frame); });
+  window.addEventListener("resize", function () { resize(); draw(); });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var re = function () { readColors(); draw(); };
+    if (mq.addEventListener) mq.addEventListener("change", re);
+  }
+  new MutationObserver(function () { readColors(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { draw(); });
+})();
+</script>
+
+</body>
+</html>
